@@ -17,6 +17,7 @@ def handle_transfer_request(client_socket, user_id, trans_data, account_balances
     sender_savings, sender_checking = map(int, account_balances[user_id])
     recipient_savings, recipient_checking = map(int, account_balances[recipient_id])
 
+
     if (account_type == "1" and sender_savings >= amount) or (account_type == "2" and sender_checking >= amount):
         if account_type == "1":
             sender_savings -= amount
@@ -31,6 +32,8 @@ def handle_transfer_request(client_socket, user_id, trans_data, account_balances
             writer = csv.writer(csv_file)
             for key, value in account_balances.items():
                 writer.writerow([key, value[0], value[1]])
+        with open("log.txt", "a") as log:
+        log.write(f"User {user_id} transferred ${amount} to {recipient_id} via account {account_type}\n")
 
         client_socket.send("\n****** Your transaction is successful.******\n".encode())
     else:
@@ -76,8 +79,9 @@ def main():
                     for row in csv_read:
                         dict_pass[row[0]] = row[1]
 
-                if user_id in dict_pass and dict_pass[user_id] == password:
-                    client_socket.send("1".encode())
+                hashed_password = hashlib.sha256(password.encode()).hexdigest()
+                    if user_id in dict_pass and dict_pass[user_id] == hashed_password:
+                        client_socket.send("1".encode())
 
                     while True:
                         trans_data1 = client_socket.recv(1024)
