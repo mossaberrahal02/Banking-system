@@ -1,6 +1,10 @@
 import socket
-import rsa
-from cryptography.fernet import Fernet
+# import rsa
+from rsa import PublicKey
+import custom_rsa as rsa
+# from cryptography.fernet import Fernet
+# import custom_fernet as Fernet
+from custom_fernet import Fernet
 import pickle
 import sys
 
@@ -39,7 +43,7 @@ def main():
             sym_key = Fernet.generate_key()
             fernet = Fernet(sym_key)
             with open("public.pem", "rb") as f:
-                public_key = rsa.PublicKey.load_pkcs1(f.read())
+                public_key = PublicKey.load_pkcs1(f.read())
 
             encrypted_sym_key = rsa.encrypt(sym_key, public_key)
             encrypted_user_id = fernet.encrypt(user_id.encode())
