@@ -1,11 +1,8 @@
 import socket
 import pickle
-# import rsa
-from rsa import PrivateKey
-import custom_rsa as rsa
+import rsa
 import hashlib
-# from cryptography.fernet import Fernet
-from custom_fernet import Fernet
+from cryptography.fernet import Fernet
 import csv
 import sys
 
@@ -64,7 +61,7 @@ def main():
                     break
                 recd_data = pickle.loads(recd_data1)
                 with open("private.pem", "rb") as f:
-                    private_key = PrivateKey.load_pkcs1(f.read())
+                    private_key = rsa.PrivateKey.load_pkcs1(f.read())
 
                 sym_key = rsa.decrypt(recd_data[0], private_key)
                 fernet = Fernet(sym_key)

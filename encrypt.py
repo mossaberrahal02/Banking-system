@@ -1,5 +1,4 @@
-# import rsa
-import custom_rsa as rsa
+import rsa
 import secrets
 import scrypt
 import string
