@@ -20,7 +20,7 @@ const activeConnections = new Map();
 // CSV-based authentication and operations (fallback when socket fails)
 function authenticateCSV(userId, password) {
   try {
-    const passwdPath = path.resolve(__dirname, '..', 'passwd.csv');
+    const passwdPath = path.resolve(__dirname, '..', 'data', 'passwd.csv');
     console.log('Reading passwd file from:', passwdPath);
     const passwdData = fs.readFileSync(passwdPath, 'utf8');
     const users = passwdData.trim().split('\n').map(line => line.split(','));
@@ -33,7 +33,7 @@ function authenticateCSV(userId, password) {
 
 function getBalanceCSV(userId) {
   try {
-    const balancePath = path.resolve(__dirname, '..', 'balance.csv');
+    const balancePath = path.resolve(__dirname, '..', 'data', 'balance.csv');
     console.log('Reading balance file from:', balancePath);
     const balanceData = fs.readFileSync(balancePath, 'utf8');
     const balances = balanceData.trim().split('\n').map(line => line.split(','));
@@ -47,7 +47,7 @@ function getBalanceCSV(userId) {
 
 function transferCSV(senderId, accountType, recipientId, amount) {
   try {
-    const balancePath = path.resolve(__dirname, '..', 'balance.csv');
+    const balancePath = path.resolve(__dirname, '..', 'data', 'balance.csv');
     const balanceData = fs.readFileSync(balancePath, 'utf8');
     const balances = balanceData.trim().split('\n').map(line => line.split(','));
     

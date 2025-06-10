@@ -14,8 +14,8 @@ active_sessions = {}
 def read_csv_file(filename):
     """Read CSV file and return data as list of lists"""
     try:
-        # Look for CSV files in parent directory
-        filepath = os.path.join('..', filename)
+        # Look for CSV files in data directory
+        filepath = os.path.join('..', 'data', filename)
         with open(filepath, 'r', newline='') as file:
             reader = csv.reader(file)
             return list(reader)
@@ -25,7 +25,7 @@ def read_csv_file(filename):
 
 def write_csv_file(filename, data):
     """Write data to CSV file"""
-    filepath = os.path.join('..', filename)
+    filepath = os.path.join('..', 'data', filename)
     with open(filepath, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerows(data)

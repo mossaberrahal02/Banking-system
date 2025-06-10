@@ -1,10 +1,14 @@
 import socket
 import pickle
-import rsa
-import hashlib
-from cryptography.fernet import Fernet
-import csv
 import sys
+import os
+import hashlib
+import csv
+
+# Add the crypto directory to the path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'crypto'))
+import custom_rsa as rsa  # Using custom RSA implementation
+from custom_fernet import Fernet  # Using custom Fernet implementation
 
 def handle_transfer_request(client_socket, user_id, trans_data, account_balances):
     account_type, recipient_id, amount = trans_data[1:4]
@@ -27,7 +31,11 @@ def handle_transfer_request(client_socket, user_id, trans_data, account_balances
 
         account_balances[user_id] = (str(sender_savings), str(sender_checking))
         account_balances[recipient_id] = (str(recipient_savings), str(recipient_checking))
-        with open("balance.csv", 'w', newline='') as csv_file:
+        
+        # Updated path to balance.csv
+        data_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'data')
+        balance_file = os.path.join(data_dir, 'balance.csv')
+        with open(balance_file, 'w', newline='') as csv_file:
             writer = csv.writer(csv_file)
             for key, value in account_balances.items():
                 writer.writerow([key, value[0], value[1]])
@@ -49,7 +57,11 @@ def main():
         print(f"Connection from {address} has been established!!!")
         account_balances = {}
 
-        with open("balance.csv", newline='') as text1:
+        # Updated path to data directory
+        data_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'data')
+        balance_file = os.path.join(data_dir, 'balance.csv')
+        
+        with open(balance_file, newline='') as text1:
             csv_read1 = csv.reader(text1)
             for row in csv_read1:
                 account_balances[row[0]] = (row[1], row[2])
@@ -60,7 +72,10 @@ def main():
                 if not recd_data1:
                     break
                 recd_data = pickle.loads(recd_data1)
-                with open("private.pem", "rb") as f:
+                
+                # Updated path to private key
+                private_key_file = os.path.join(data_dir, 'private.pem')
+                with open(private_key_file, "rb") as f:
                     private_key = rsa.PrivateKey.load_pkcs1(f.read())
 
                 sym_key = rsa.decrypt(recd_data[0], private_key)
@@ -71,7 +86,8 @@ def main():
                 # hash_pass = hashlib.md5(password.encode())
                 # hash_pass_hex = hash_pass.hexdigest()
                 dict_pass = {}
-                with open("passwd.csv", newline='') as text:
+                passwd_file = os.path.join(data_dir, 'passwd.csv')
+                with open(passwd_file, newline='') as text:
                     csv_read = csv.reader(text)
                     for row in csv_read:
                         dict_pass[row[0]] = row[1]

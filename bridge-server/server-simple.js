@@ -34,8 +34,8 @@ app.post('/api/auth/login', (req, res) => {
   }
 
   try {
-    // Read passwd.csv
-    const passwdPath = path.resolve(__dirname, '..', 'passwd.csv');
+    // Read passwd.csv from data directory
+    const passwdPath = path.resolve(__dirname, '..', 'data', 'passwd.csv');
     const passwdData = fs.readFileSync(passwdPath, 'utf8');
     const users = passwdData.trim().split('\n').map(line => line.split(','));
     const user = users.find(([id, pass]) => id === userId && pass === password);
@@ -82,7 +82,7 @@ app.get('/api/balance', (req, res) => {
   console.log(`Balance request for user: ${session.userId}`);
   
   try {
-    const balancePath = path.resolve(__dirname, '..', 'balance.csv');
+    const balancePath = path.resolve(__dirname, '..', 'data', 'balance.csv');
     const balanceData = fs.readFileSync(balancePath, 'utf8');
     const balances = balanceData.trim().split('\n').map(line => line.split(','));
     const userBalance = balances.find(([id]) => id === session.userId);
@@ -110,7 +110,7 @@ app.post('/api/transfer', (req, res) => {
   console.log(`Transfer request: ${session.userId} -> ${recipientId}, amount: ${amount}`);
   
   try {
-    const balancePath = path.resolve(__dirname, '..', 'balance.csv');
+    const balancePath = path.resolve(__dirname, '..', 'data', 'balance.csv');
     const balanceData = fs.readFileSync(balancePath, 'utf8');
     const balances = balanceData.trim().split('\n').map(line => line.split(','));
     

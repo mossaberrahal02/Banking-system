@@ -1,10 +1,14 @@
 bottle==0.13.2
 cffi==1.17.1
-cryptography==45.0.2
-cryptography-fernet==0.1.0
+# External crypto libraries not needed - using custom implementations
+# cryptography==45.0.2  
+# cryptography-fernet==0.1.0  
+# rsa==4.9.1  
 norminette==3.3.55
 pyasn1==0.6.1
 pycparser==2.22
-rsa==4.9.1
 scrypt==0.8.27
 vboxapi
+# Flask dependencies for the web interface
+flask==3.1.1
+flask-cors==6.0.0

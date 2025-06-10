@@ -1,8 +1,12 @@
 import socket
-import rsa
-from cryptography.fernet import Fernet
 import pickle
 import sys
+import os
+
+# Add the crypto directory to the path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'crypto'))
+import custom_rsa as rsa  # Using custom RSA implementation
+from custom_fernet import Fernet  # Using custom Fernet implementation
 
 def transfer_funds(s):
     while True:
@@ -38,7 +42,11 @@ def main():
 
             sym_key = Fernet.generate_key()
             fernet = Fernet(sym_key)
-            with open("public.pem", "rb") as f:
+            
+            # Updated path to public key
+            data_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'data')
+            public_key_file = os.path.join(data_dir, 'public.pem')
+            with open(public_key_file, "rb") as f:
                 public_key = rsa.PublicKey.load_pkcs1(f.read())
 
             encrypted_sym_key = rsa.encrypt(sym_key, public_key)
