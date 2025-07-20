@@ -1,0 +1,296 @@
+# Banking System - Encryption & Security Documentation
+# ====================================================
+# Generated on: July 20, 2025
+# Project: Banking System with RSA & Symmetric Encryption
+# Author: Banking System Development Team
+
+## PROJECT OVERVIEW
+==================
+This banking system is a full-stack application that implements secure communication
+between client and server using multiple layers of encryption. The system consists of:
+
+1. **Backend Components:**
+   - Legacy Python socket-based server (bank.py)
+   - Modern Flask REST API server (bridge-server/server.py)
+   
+2. **Frontend Components:**
+   - Command-line ATM client (atm.py)
+   - React.js web application (frontend/)
+
+3. **Data Storage:**
+   - CSV files for user credentials and account balances
+   - RSA key pair files (public.pem, private.pem)
+
+## ENCRYPTION & SECURITY ARCHITECTURE
+====================================
+
+### 1. RSA ASYMMETRIC ENCRYPTION
+-------------------------------
+**Implementation:** RSA-1024 bit key pairs
+**Files:** encrypt.py, public.pem, private.pem
+**Library:** `rsa==4.9.1`
+
+**Key Generation Process:**
+- RSA key pairs are generated using `rsa.newkeys(1024)`
+- Public key saved as "public.pem" in PKCS#1 PEM format
+- Private key saved as "private.pem" in PKCS#1 PEM format
+- Key size: 1024 bits (suitable for educational purposes)
+
+**Usage in System:**
+- Client (ATM) loads public key to encrypt symmetric key
+- Server loads private key to decrypt symmetric key
+- Establishes secure channel for symmetric key exchange
+
+**Code Example:**
+```python
+# Key Generation (encrypt.py)
+public_key, private_key = rsa.newkeys(1024)
+with open("public.pem", "wb") as f:
+    f.write(public_key.save_pkcs1("PEM"))
+
+# Client-side encryption (atm.py)
+with open("public.pem", "rb") as f:
+    public_key = rsa.PublicKey.load_pkcs1(f.read())
+encrypted_sym_key = rsa.encrypt(sym_key, public_key)
+
+# Server-side decryption (bank.py)
+with open("private.pem", "rb") as f:
+    private_key = rsa.PrivateKey.load_pkcs1(f.read())
+decrypted_sym_key = rsa.decrypt(encrypted_sym_key, private_key)
+```
+
+### 2. SYMMETRIC ENCRYPTION (FERNET)
+----------------------------------
+**Implementation:** Fernet encryption from cryptography library
+**Library:** `cryptography==45.0.2`, `cryptography-fernet==0.1.0`
+
+**Key Generation Process:**
+- Fernet symmetric keys generated using `Fernet.generate_key()`
+- Alternative: Scrypt-based key derivation from random strings
+- Salt-based key strengthening using `scrypt` library
+
+**Usage in System:**
+- Encrypts user credentials (username, password) during transmission
+- Encrypts transaction data between client and server
+- Provides authenticated encryption (confidentiality + integrity)
+
+**Code Example:**
+```python
+# Key generation
+sym_key = Fernet.generate_key()
+fernet = Fernet(sym_key)
+
+# Encryption
+encrypted_user_id = fernet.encrypt(user_id.encode())
+encrypted_password = fernet.encrypt(password.encode())
+
+# Decryption
+user_id = fernet.decrypt(recd_data[1]).decode()
+password = fernet.decrypt(recd_data[2]).decode()
+```
+
+### 3. SCRYPT KEY DERIVATION
+---------------------------
+**Implementation:** Scrypt-based key strengthening
+**Library:** `scrypt==0.8.27`
+
+**Parameters:**
+- N=2048 (CPU/memory cost parameter)
+- r=8 (block size parameter)
+- p=1 (parallelization parameter)
+- buflen=32 (derived key length)
+
+**Code Example:**
+```python
+random_string = ''.join(random.choices(string.ascii_lowercase + string.digits, k=16))
+salt = secrets.token_bytes(32)
+sym_key = scrypt.hash(random_string, salt, N=2048, r=8, p=1, buflen=32)
+```
+
+## SECURITY MECHANISMS
+=====================
+
+### 1. AUTHENTICATION SYSTEM
+---------------------------
+**Legacy System (bank.py):**
+- Encrypted credential transmission using Fernet
+- Plain text password storage in passwd.csv
+- Simple username/password matching
+
+**Modern System (Flask API):**
+- Token-based session management
+- Bearer token authentication for API endpoints
+- Session storage in server memory
+
+**User Credentials (passwd.csv):**
+```
+mossab,1234
+krid,5678
+blackhole,3456
+```
+
+### 2. SESSION MANAGEMENT
+------------------------
+**Implementation:** Server-side session storage
+**Token Generation:** Using `secrets` module for cryptographically secure tokens
+**Session Data:** Stores userId, createdAt timestamp
+
+**Code Example:**
+```python
+# Token generation
+token = secrets.token_urlsafe(32)
+active_sessions[token] = {
+    'userId': user_id,
+    'createdAt': time.time()
+}
+```
+
+### 3. API ENDPOINT SECURITY
+---------------------------
+**Protected Endpoints:**
+- `/api/balance` - Requires Bearer token authentication
+- `/api/transfer` - Requires Bearer token authentication
+- `/api/users` - Requires Bearer token authentication
+
+**Authentication Flow:**
+1. Client sends credentials to `/api/auth/login`
+2. Server validates credentials against passwd.csv
+3. Server generates secure token and stores session
+4. Client uses Bearer token for subsequent API calls
+
+## DATA SECURITY
+===============
+
+### 1. DATA STORAGE SECURITY
+---------------------------
+**User Credentials:**
+- File: passwd.csv
+- Format: Plain text (username,password)
+- **SECURITY RISK:** Passwords stored in plain text
+
+**Account Balances:**
+- File: balance.csv  
+- Format: Plain text (username,savings,checking)
+- Current balances:
+  - mossab: Savings: $19,710, Checking: $980
+  - krid: Savings: $314, Checking: $975
+  - blackhole: Savings: $10,020, Checking: $1,045
+
+### 2. TRANSMISSION SECURITY
+---------------------------
+**Legacy Socket Communication:**
+- RSA encryption for symmetric key exchange
+- Fernet encryption for all data transmission
+- Pickle serialization for data packaging
+
+**Modern REST API Communication:**
+- HTTPS recommended for production (currently HTTP)
+- JSON data format
+- Bearer token authentication headers
+
+## SECURITY VULNERABILITIES & RECOMMENDATIONS
+============================================
+
+### CRITICAL SECURITY ISSUES:
+1. **Plain Text Password Storage**
+   - Current: Passwords stored in plain text in passwd.csv
+   - Risk: Complete credential exposure if file is compromised
+   - Recommendation: Implement password hashing (bcrypt, Argon2, PBKDF2)
+
+2. **Weak RSA Key Size**
+   - Current: 1024-bit RSA keys
+   - Risk: Vulnerable to advanced cryptographic attacks
+   - Recommendation: Upgrade to 2048-bit or 4096-bit RSA keys
+
+3. **HTTP Communication**
+   - Current: Flask API runs on HTTP
+   - Risk: Man-in-the-middle attacks, credential interception
+   - Recommendation: Implement HTTPS/TLS encryption
+
+4. **Session Storage**
+   - Current: In-memory session storage
+   - Risk: Sessions lost on server restart
+   - Recommendation: Persistent session storage with expiration
+
+### MEDIUM PRIORITY ISSUES:
+1. **CSV File Security**
+   - Recommendation: Encrypt CSV files at rest
+   - Implement file integrity checking
+   - Use database with proper access controls
+
+2. **Error Handling**
+   - Recommendation: Implement secure error messages
+   - Avoid information leakage in error responses
+
+3. **Input Validation**
+   - Recommendation: Implement comprehensive input sanitization
+   - Add transaction amount limits and validation
+
+## CRYPTOGRAPHIC LIBRARIES USED
+==============================
+1. **rsa==4.9.1** - RSA public-key cryptography
+2. **cryptography==45.0.2** - Modern cryptographic recipes and primitives
+3. **cryptography-fernet==0.1.0** - Fernet symmetric encryption
+4. **scrypt==0.8.27** - Key derivation function
+5. **secrets** (Python standard library) - Cryptographically secure tokens
+
+## SECURITY BEST PRACTICES IMPLEMENTED
+=====================================
+✅ Hybrid encryption (RSA + Symmetric)
+✅ Authenticated encryption (Fernet)
+✅ Secure token generation (secrets module)
+✅ Key derivation functions (Scrypt)
+✅ CORS configuration for web API
+✅ Session-based authentication
+
+## SECURITY IMPROVEMENTS NEEDED
+==============================
+❌ Password hashing implementation
+❌ HTTPS/TLS encryption
+❌ Strong RSA key sizes (2048+ bits)
+❌ Database encryption
+❌ Input validation and sanitization
+❌ Rate limiting and brute force protection
+❌ Audit logging and monitoring
+❌ Secure key management and rotation
+
+## FILE STRUCTURE RELATED TO SECURITY
+====================================
+```
+├── encrypt.py              # RSA key generation and symmetric key creation
+├── encrypt-v0.py            # Legacy encryption utilities
+├── public.pem               # RSA public key (1024-bit)
+├── private.pem              # RSA private key (1024-bit)
+├── passwd.csv               # User credentials (PLAIN TEXT - SECURITY RISK)
+├── balance.csv              # Account balances (PLAIN TEXT)
+├── bank.py                  # Legacy server with socket encryption
+├── atm.py                   # Legacy client with encryption
+├── bridge-server/
+│   └── server.py            # Flask API with token authentication
+├── frontend/                # React application (client-side)
+└── requirements.txt         # Python security dependencies
+```
+
+## CONCLUSION
+============
+This banking system demonstrates a comprehensive approach to encryption and security,
+implementing both legacy socket-based communication with RSA+Fernet encryption and
+modern REST API authentication. However, several critical security vulnerabilities
+need to be addressed before production deployment, particularly password hashing,
+HTTPS implementation, and stronger encryption keys.
+
+The system serves as an excellent educational example of cryptographic concepts
+including asymmetric encryption, symmetric encryption, key derivation functions,
+and secure session management.
+
+## REFERENCES
+============
+- RSA Cryptography: https://en.wikipedia.org/wiki/RSA_(cryptosystem)
+- Fernet Encryption: https://cryptography.io/en/latest/fernet/
+- Scrypt Key Derivation: https://tools.ietf.org/html/rfc7914
+- OWASP Security Guidelines: https://owasp.org/
+- Python Cryptography Library: https://cryptography.io/
+
+---
+Document generated automatically based on banking system codebase analysis.
+Last updated: July 20, 2025
