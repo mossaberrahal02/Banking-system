@@ -7,4 +7,5 @@ pyasn1==0.6.1
 pycparser==2.22
 rsa==4.9.1
 scrypt==0.8.27
-vboxapi
+Flask
+Flask-cors
